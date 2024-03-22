@@ -14,14 +14,14 @@ def weights_init(m):
         w_bound = np.sqrt(6. / (fan_in + fan_out))
         m.weight.data.uniform_(-w_bound, w_bound)
         m.bias.data.fill_(0)
-        print("inital  linear weight ")
+        print("inital linear weight ")
 
 
 class word_embedding(nn.Module):
     def __init__(self,vocab_length , embedding_dim):
         super(word_embedding, self).__init__()
         w_embeding_random_intial = np.random.uniform(-1,1,size=(vocab_length ,embedding_dim))
-        self.word_embedding = nn.Embedding(vocab_length,embedding_dim)
+        self.word_embedding = nn.Embedding(vocab_length,embedding_dim)  # 将vocab_len大小词典中的每个词嵌入到embedding_dim
         self.word_embedding.weight.data.copy_(torch.from_numpy(w_embeding_random_intial))
     def forward(self,input_sentence):
         """
@@ -45,11 +45,10 @@ class RNN_model(nn.Module):
         # here you need to define the "self.rnn_lstm"  the input size is "embedding_dim" and the output size is "lstm_hidden_dim"
         # the lstm should have two layers, and the  input and output tensors are provided as (batch, seq, feature)
         # ???
-
-
+        self.lstm = nn.LSTM(input_size=embedding_dim,hidden_size=lstm_hidden_dim,num_layers=2,batch_first=True)
 
         ##########################################
-        self.fc = nn.Linear(lstm_hidden_dim, vocab_len )
+        self.fc = nn.Linear(lstm_hidden_dim, vocab_len)
         self.apply(weights_init) # call the weights initial function.
 
         self.softmax = nn.LogSoftmax() # the activation function.
@@ -61,9 +60,7 @@ class RNN_model(nn.Module):
         # here you need to put the "batch_input"  input the self.lstm which is defined before.
         # the hidden output should be named as output, the initial hidden state and cell state set to zero.
         # ???
-
-
-
+        output,(h_n,c_n)=self.lstm(batch_input)
 
         ################################################
         out = output.contiguous().view(-1,self.lstm_dim)
@@ -73,7 +70,7 @@ class RNN_model(nn.Module):
         out = self.softmax(out)
 
         if is_test:
-            prediction = out[ -1, : ].view(1,-1)
+            prediction = out[-1, : ].view(1,-1)
             output = prediction
         else:
            output = out
